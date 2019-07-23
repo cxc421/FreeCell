@@ -6,7 +6,7 @@ import { ReactComponent as PauseIcon } from '../assets/icon-pause.svg';
 import { ReactComponent as ReplayIcon } from '../assets/icon-replay.svg';
 import { ReactComponent as PrevStepIcon } from '../assets/icon-prev-step.svg';
 import CtrlBtn from '../components/CtrlBtn';
-import CardArea from '../components/CardArea';
+import DeckArea from '../components/DeckArea';
 // import CardTemp from '../components/CardTemp';
 
 const StyledLogo = styled(Logo)`
@@ -28,7 +28,7 @@ const BtnArea = styled.div`
   }
 `;
 
-const CardAreaWrapper = styled.div`
+const DeckAreaWrapper = styled.div`
   position: absolute;
   height: calc(100% - 155px);
   width: 100%;
@@ -49,9 +49,9 @@ const Template6 = () => {
         <CtrlBtn SvgIcon={PrevStepIcon} text="上一步" />
         <CtrlBtn SvgIcon={PauseIcon} text="暫停" />
       </BtnArea>
-      <CardAreaWrapper>
-        <CardArea />
-      </CardAreaWrapper>
+      <DeckAreaWrapper>
+        <DeckArea />
+      </DeckAreaWrapper>
     </Layout>
   );
 };

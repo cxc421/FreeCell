@@ -8,9 +8,18 @@ import { ReactComponent as ElfIcon } from '../assets/pic-card-elf.svg';
 import { ReactComponent as KnightIcon } from '../assets/pic-card-knight.svg';
 import { ReactComponent as KingtIcon } from '../assets/pic-card-king.svg';
 
-type OpenCellProps = { type: CardType.OpenCell };
-type OpenFundationProps = { type: CardType.OpenFundation; suit: CardSuit };
-type NormalCardProps = { type: CardType.Card; suit: CardSuit; number: number };
+type OpenCellProps = { type: CardType.OpenCell; style?: React.CSSProperties };
+type OpenFundationProps = {
+  type: CardType.OpenFundation;
+  suit: CardSuit;
+  style?: React.CSSProperties;
+};
+export type NormalCardProps = {
+  type: CardType.Card;
+  suit: CardSuit;
+  number: number;
+  style?: React.CSSProperties;
+};
 type CardProps = OpenCellProps | OpenFundationProps | NormalCardProps;
 
 type ContainerProps = { type: CardType; suit?: CardSuit };
@@ -309,19 +318,19 @@ function getFundationIcon(suit: CardSuit) {
 const Card: React.FC<CardProps> = props => {
   if (props.type === CardType.Card) {
     return (
-      <Container type={props.type} suit={props.suit}>
+      <Container type={props.type} suit={props.suit} style={props.style}>
         {getCardContent(props)}
       </Container>
     );
   }
 
   if (props.type === CardType.OpenCell) {
-    return <Container type={props.type} />;
+    return <Container type={props.type} style={props.style} />;
   }
 
   if (props.type === CardType.OpenFundation) {
     return (
-      <Container type={props.type} suit={props.suit}>
+      <Container type={props.type} suit={props.suit} style={props.style}>
         {getFundationIcon(props.suit)}
       </Container>
     );
