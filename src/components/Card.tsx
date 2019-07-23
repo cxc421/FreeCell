@@ -127,15 +127,15 @@ function getCardContent({ suit, number }: NormalCardProps) {
   const Icon = getIcon(suit);
   let text = String(number);
   let textStyle: React.CSSProperties = {};
-  if (number > 10) {
-    if (number === 11) {
-      text = 'J';
-    } else if (number === 12) {
-      text = 'Q';
-      textStyle = { transform: 'translateY(-2px)' };
-    } else {
-      text = 'K';
-    }
+  if (number === 1) {
+    text = 'A';
+  } else if (number === 11) {
+    text = 'J';
+  } else if (number === 12) {
+    text = 'Q';
+    textStyle = { transform: 'translateY(-2px)' };
+  } else if (number === 13) {
+    text = 'K';
   }
 
   let centerContent;

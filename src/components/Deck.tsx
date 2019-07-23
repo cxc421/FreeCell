@@ -18,19 +18,54 @@ const Container = styled.div`
   }
 `;
 
-const Deck: React.FC<DeckProps> = props => {
+function getDisplayCard(props: DeckProps): JSX.Element[] {
   const baseZindex = 10;
-  const CardPlacement =
-    props.type === CardType.OpenFundation ? (
+
+  if (props.type === CardType.OpenCell) {
+    const { cards } = props;
+    return [
+      <Card key="open-0" type={CardType.OpenCell} />,
+      <Card key="0" {...cards[0]} style={{ zIndex: baseZindex + 1 }} />
+    ];
+  }
+
+  if (props.type === CardType.OpenFundation) {
+    const { cards, suit } = props;
+    return [
       <Card
+        key="fundation-0"
         type={CardType.OpenFundation}
-        suit={props.suit}
+        suit={suit}
         style={{ zIndex: baseZindex }}
+      />,
+      ...cards.map((card, index) => (
+        <Card
+          key={index}
+          {...card}
+          style={{ zIndex: baseZindex + (index + 1) }}
+        />
+      ))
+    ];
+  }
+
+  const { cards } = props;
+  return [
+    <Card key="open-0" type={CardType.OpenCell} />,
+    ...cards.map((card, index) => (
+      <Card
+        key={index}
+        {...card}
+        style={{
+          zIndex: baseZindex + (index + 1),
+          transform: `translateY(${30 * index}px)`
+        }}
       />
-    ) : (
-      <Card type={CardType.OpenCell} />
-    );
-  const displayCards = [CardPlacement];
+    ))
+  ];
+}
+
+const Deck: React.FC<DeckProps> = props => {
+  const displayCards = getDisplayCard(props);
 
   return <Container>{displayCards}</Container>;
 };
