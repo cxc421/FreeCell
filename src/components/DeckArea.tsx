@@ -217,17 +217,17 @@ const DeckArea = () => {
                 type: CardType.Card,
                 suit: CardSuit.Spade,
                 number: 3
-              },
-              {
-                type: CardType.Card,
-                suit: CardSuit.Spade,
-                number: 2
-              },
-              {
-                type: CardType.Card,
-                suit: CardSuit.Spade,
-                number: 1
               }
+              // {
+              //   type: CardType.Card,
+              //   suit: CardSuit.Spade,
+              //   number: 2
+              // },
+              // {
+              //   type: CardType.Card,
+              //   suit: CardSuit.Spade,
+              //   number: 1
+              // }
             ]}
           />
           <Deck type={CardType.Card} cards={[]} />

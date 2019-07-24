@@ -1,6 +1,7 @@
-import React from 'react';
-import styled, { css as _css } from 'styled-components';
-import { ReactComponent as BgImg } from '../assets/bg-img.svg';
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { ReactComponent as BgMain } from '../assets/bg-img-main.svg';
+import { ReactComponent as BgWellcome } from '../assets/bg-img-wellcome.svg';
 
 interface LayoutProps {
   highBg?: boolean;
@@ -13,7 +14,6 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  overflow: hidden;
 `;
 
 const Content = styled.div`
@@ -25,53 +25,94 @@ const Content = styled.div`
   z-index: 3;
 `;
 
-const styledBgBaseCss = _css`
-  position: absolute;
-  width: 100%;
-
-  left: 50%;
-  top: calc(100% - 287px);
-  transform: translateX(-50%);
-  transition: transform 0.3s ease-out;
-  min-width: 1280px;
-
-  // bottom: 0;
-  // left: 0;
+const BgWrapper = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
 `;
 
-const StyledBgLeft = styled(BgImg)`
-  ${styledBgBaseCss};
-  path:first-child {
-    display: none;
-  }
-  z-index: 1;
+const useOverScale = (
+  w: number,
+  h: number,
+  offset: number,
+  offsetType: 'top' | 'bottom'
+): number => {
+  const [scale, setScale] = useState(0);
 
-  &[data-highbg='true'] {
-    z-index: 0;
-    transform-origin: center bottom;
-    transform: translateX(-20%) scale(2.05);
-  }
-`;
+  useEffect(() => {
+    function resize() {
+      const { clientWidth, clientHeight } = document.body;
+      const vH = offsetType === 'bottom' ? offset : clientHeight - offset;
+      const vW = clientWidth;
+      let newScale = vW / w;
+      if (newScale * h < vH) {
+        newScale = vH / h;
+      }
+      setScale(newScale);
+    }
 
-const StyledBgRight = styled(BgImg)`
-  ${styledBgBaseCss};
-  path:last-child {
-    display: none;
-  }
-  z-index: 0;
+    window.addEventListener('resize', resize);
+    resize();
+    return () => {
+      window.removeEventListener('resize', resize);
+    };
+  }, [w, h, offset, offsetType]);
 
-  &[data-highbg='true'] {
-    z-index: 1;
-    transform-origin: center bottom;
-    transform: translateX(-86%) scale(2.25);
-  }
-`;
+  return scale;
+};
+
+function useBgImg(highBg: boolean) {
+  const BgImg = highBg ? BgMain : BgWellcome;
+  const bgWidth = 1280;
+  const bgHeight = highBg ? 617 : 288;
+  const offset = highBg ? 183 : 271;
+  const offsetType = highBg ? 'top' : 'bottom';
+  const scale = useOverScale(bgWidth, bgHeight, offset, offsetType);
+
+  return (
+    <BgImg
+      style={{
+        position: 'absolute',
+        top: offsetType === 'top' ? offset : `calc(100% - ${offset}px)`,
+        transformOrigin: 'center top',
+        left: '50%',
+        transform: `translateX(-50%) scale(${scale})`,
+        width: bgWidth
+      }}
+    />
+  );
+}
 
 const Layout: React.FC<LayoutProps> = ({ children, highBg = false }) => {
+  // const BgImg = BgMain;
+  // const scale = useOverScaleTopOffset(1280, 617, 183);
+  // const bgStyle: React.CSSProperties = {
+  //   position: 'absolute',
+  //   top: 183,
+  //   transformOrigin: 'center top',
+  //   left: '50%',
+  //   transform: `translateX(-50%) scale(${scale})`,
+  //   width: 1280
+  // };
+
+  // const BgImg = BgWellcome;
+  // const scale = useOverScaleBottomOffset(1280, 288, 271);
+  // const bgStyle: React.CSSProperties = {
+  //   position: 'absolute',
+  //   top: `calc(100% - ${271}px)`,
+  //   transformOrigin: 'center top',
+  //   left: '50%',
+  //   transform: `translateX(-50%) scale(${scale})`,
+  //   width: 1280
+  // };
+  const bgImg = useBgImg(highBg);
+
   return (
     <Container>
-      <StyledBgLeft data-highbg={highBg} />
-      <StyledBgRight data-highbg={highBg} />
+      <BgWrapper>{bgImg}</BgWrapper>
       <Content>{children}</Content>
     </Container>
   );
