@@ -55,9 +55,12 @@ const useOverScale = (
     }
 
     window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('load', resize);
+
     return () => {
+      console.log('clear');
       window.removeEventListener('resize', resize);
+      window.removeEventListener('load', resize);
     };
   }, [w, h, offset, offsetType]);
 
