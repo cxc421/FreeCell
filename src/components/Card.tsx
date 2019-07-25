@@ -1,3 +1,6 @@
+/**
+ * Note: 當綁定事件的元素裡面有子元素的時候，鼠標經過綁定mouseover的當前元素以及它裡面的子元素的時候，都會觸發，而經過綁定mouseenter的元素時，只會在鼠標剛進入的時候觸發，當進入其子元素的時候，是不會再觸發的了。
+ */
 import React from 'react';
 import styled, { css as _css } from 'styled-components';
 import { ReactComponent as SpadeIcon } from '../assets/icon-spades.svg';
@@ -7,6 +10,9 @@ import { ReactComponent as HeartIcon } from '../assets/icon-heart.svg';
 import { ReactComponent as ElfIcon } from '../assets/pic-card-elf.svg';
 import { ReactComponent as KnightIcon } from '../assets/pic-card-knight.svg';
 import { ReactComponent as KingtIcon } from '../assets/pic-card-king.svg';
+
+export const cardWidth = 100;
+export const cardHeight = 140;
 
 type OpenCellProps = { type: CardType.OpenCell; style?: React.CSSProperties };
 type OpenFundationProps = {
@@ -40,8 +46,8 @@ export enum CardSuit {
 
 const Container = styled.div<ContainerProps>`
   position: relative;
-  width: 100px;
-  height: 140px;
+  width: ${cardWidth}px;
+  height: ${cardHeight}px;
   border-radius: 5px;
   color: ${props =>
     props.suit === CardSuit.Heart || props.suit === CardSuit.Diamond
@@ -318,7 +324,12 @@ function getFundationIcon(suit: CardSuit) {
 const Card: React.FC<CardProps> = props => {
   if (props.type === CardType.Card) {
     return (
-      <Container type={props.type} suit={props.suit} style={props.style}>
+      <Container
+        type={props.type}
+        suit={props.suit}
+        style={props.style}
+        id={`card-${props.suit}-${props.number}`}
+      >
         {getCardContent(props)}
       </Container>
     );

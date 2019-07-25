@@ -67,7 +67,7 @@ const DeckArea = () => {
   };
 
   return (
-    <Container style={containerStyle}>
+    <Container id="deck-area" style={containerStyle}>
       <Row>
         <LeftArea>
           <Deck

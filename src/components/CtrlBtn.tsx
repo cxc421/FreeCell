@@ -24,6 +24,7 @@ const Container = styled.div<HoverStyle>`
   position: relative;
   width: 60px;
   height: 70px;
+  border-radius: 5px;
   cursor: pointer;
   transition: background 0.2s;
 
