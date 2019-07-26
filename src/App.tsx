@@ -9,6 +9,7 @@ import { ReactComponent as PauseIcon } from './assets/icon-pause.svg';
 import { ReactComponent as ReplayIcon } from './assets/icon-replay.svg';
 import { ReactComponent as PrevStepIcon } from './assets/icon-prev-step.svg';
 import { ReactComponent as QuestionIcon } from './assets/icon-question.svg';
+import { useCardState } from './CardState';
 
 enum Page {
   Intro,
@@ -21,8 +22,11 @@ const Content = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  bottom: 0;
-  right: 0;
+  /* bottom: 0;
+  right: 0; */
+  height: 100%;
+  width: 100%;
+  min-height: 100%;
   user-select: none;
 `;
 
@@ -64,6 +68,7 @@ const TimeScoreArea = styled.div`
   left: 50%;
   transform: translateX(-50%);
   bottom: 26px;
+  z-index: 1;
 
   display: flex;
   flex-direction: column;
@@ -84,6 +89,11 @@ const Time = styled.div`
 
 const App: React.FC = () => {
   const [page, setPage] = useState(Page.Game);
+  const { decks, foundations, cells, moveDeckCardToCell } = useCardState();
+
+  function test() {
+    moveDeckCardToCell(0, 3);
+  }
 
   if (page === Page.Game) {
     return (
@@ -105,12 +115,13 @@ const App: React.FC = () => {
               textColor="white"
               iconColor="white"
               hoverStyle="color"
+              onClick={test}
             />
             <Time>Time: 2:19</Time>
             <Score>Score: 02</Score>
           </TimeScoreArea>
           <BottomRow>
-            <CardArea />
+            <CardArea cells={cells} decks={decks} foundations={foundations} />
           </BottomRow>
         </Content>
       </>

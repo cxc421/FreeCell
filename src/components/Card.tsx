@@ -14,17 +14,24 @@ import { ReactComponent as KingtIcon } from '../assets/pic-card-king.svg';
 export const cardWidth = 100;
 export const cardHeight = 140;
 
-type OpenCellProps = { type: CardType.OpenCell; style?: React.CSSProperties };
+type OpenCellProps = {
+  type: CardType.OpenCell;
+  style?: React.CSSProperties;
+  id?: string;
+};
 type OpenFundationProps = {
   type: CardType.OpenFundation;
   suit: CardSuit;
   style?: React.CSSProperties;
+  id?: string;
 };
 export type NormalCardProps = {
   type: CardType.Card;
   suit: CardSuit;
   number: number;
   style?: React.CSSProperties;
+  id?: string;
+  onMouseDown?: () => void;
 };
 type CardProps = OpenCellProps | OpenFundationProps | NormalCardProps;
 
@@ -39,16 +46,18 @@ export enum CardType {
 
 export enum CardSuit {
   Spade, // 黑桃
+  Heart, // 紅心
   Club, // 梅花
-  Diamond, // 方塊
-  Heart // 紅心
+  Diamond // 方塊
 }
 
 const Container = styled.div<ContainerProps>`
-  position: relative;
+  position: absolute;
   width: ${cardWidth}px;
   height: ${cardHeight}px;
   border-radius: 5px;
+  transform-origin: left top;
+  transition: all 300ms ease-in-out;
   color: ${props =>
     props.suit === CardSuit.Heart || props.suit === CardSuit.Diamond
       ? '#F1697B'
@@ -323,12 +332,15 @@ function getFundationIcon(suit: CardSuit) {
 
 const Card: React.FC<CardProps> = props => {
   if (props.type === CardType.Card) {
+    const cardStyle = props.style ? { ...props.style } : {};
+
     return (
       <Container
         type={props.type}
         suit={props.suit}
-        style={props.style}
-        id={`card-${props.suit}-${props.number}`}
+        style={cardStyle}
+        id={props.id}
+        onMouseDown={props.onMouseDown}
       >
         {getCardContent(props)}
       </Container>
@@ -336,12 +348,17 @@ const Card: React.FC<CardProps> = props => {
   }
 
   if (props.type === CardType.OpenCell) {
-    return <Container type={props.type} style={props.style} />;
+    return <Container type={props.type} style={props.style} id={props.id} />;
   }
 
   if (props.type === CardType.OpenFundation) {
     return (
-      <Container type={props.type} suit={props.suit} style={props.style}>
+      <Container
+        type={props.type}
+        suit={props.suit}
+        style={props.style}
+        id={props.id}
+      >
         {getFundationIcon(props.suit)}
       </Container>
     );

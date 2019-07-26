@@ -18,6 +18,7 @@ type HoverStyle = {
 interface CtrlBtnProps extends TextColor, IconColor, HoverStyle {
   SvgIcon: React.FC<React.SVGProps<SVGSVGElement>>;
   text: string;
+  onClick?: () => void;
 }
 
 const Container = styled.div<HoverStyle>`
@@ -66,7 +67,8 @@ const CtrlBtn: React.FC<CtrlBtnProps> = ({
   text,
   textColor,
   iconColor,
-  hoverStyle = 'background'
+  hoverStyle = 'background',
+  onClick
 }) => {
   const StyledSvgIcon = styled(SvgIcon)`
     path,
@@ -76,7 +78,7 @@ const CtrlBtn: React.FC<CtrlBtnProps> = ({
   `;
 
   return (
-    <Container hoverStyle={hoverStyle}>
+    <Container hoverStyle={hoverStyle} onClick={onClick}>
       <StyledSvgIcon style={{ width: 25 }} />
       <Text textColor={textColor}>{text}</Text>
     </Container>
