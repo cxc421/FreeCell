@@ -12,4 +12,6 @@ body,
   height: 100%;
   font-family: 'Noto Sans TC',
     sans-serif;
+  user-select: none;
+  overflow: hidden;
 }

@@ -4,13 +4,6 @@ import $ from 'jquery';
 import Card, { CardType, CardSuit } from './Card';
 import { CardState } from '../CardState';
 
-// const defaultCardAreaWidth = 1280;
-// const defaultCardWidth = 100;
-// const defaultCardHeight = 140;
-// const defaultHorizontalPadding = 30;
-// const defaultCardAreaHeight = 645;
-// const defaultCardAreaRatio = defaultCardAreaWidth / defaultCardAreaHeight;
-
 interface CardAreaProps extends CardState {}
 
 interface CardJqueryMap {
@@ -25,9 +18,11 @@ const Container = styled.div`
   width: 1280px;
   height: 645px;
   background: rgba(255, 50, 240, 0.2);
-  transform-origin: center top;
+  transform-origin: 0 0;
   position: relative;
+  left: 50%;
   flex-shrink: 0;
+  /* user-select: none; */
 
   .can-grab {
     cursor: grab;
@@ -35,6 +30,8 @@ const Container = styled.div`
 
   .grabbing {
     cursor: grabbing !important;
+    transition: all 0ms ease-in-out !important;
+    z-index: 9999 !important;
   }
 `;
 
@@ -45,6 +42,11 @@ class CardArea extends PureComponent<CardAreaProps> {
   $cardMap: CardJqueryMap = {};
   canGrabIds: CanGrabIds = {};
   $movingCard: JQuery<HTMLDivElement> | null = null;
+  movingCardOriTop = 0;
+  movingCardOriLeft = 0;
+  mouseDownPageX = 0;
+  mouseDownPageY = 0;
+  scale = 1;
 
   getJqueryDom(id: string) {
     if (this.$cardMap[id]) return this.$cardMap[id];
@@ -79,17 +81,37 @@ class CardArea extends PureComponent<CardAreaProps> {
     this.canGrabIds = canGrabIds;
   }
 
-  onCardMouseDown = (suit: CardSuit, number: number) => {
+  onCardMouseDown = (e: React.MouseEvent, suit: CardSuit, number: number) => {
     const id = `#card-${suit}-${number}`;
     if (this.canGrabIds.hasOwnProperty(id)) {
       this.$movingCard = this.getJqueryDom(id);
       this.$movingCard.addClass('grabbing');
+      this.movingCardOriTop = parseInt(this.$movingCard.css('top'), 10);
+      this.movingCardOriLeft = parseInt(this.$movingCard.css('left'), 10);
+      this.mouseDownPageX = e.pageX;
+      this.mouseDownPageY = e.pageY;
     }
+  };
+
+  onWindowMouseMove = (e: MouseEvent) => {
+    if (!this.$movingCard) return;
+
+    console.log(this.scale);
+
+    this.$movingCard.css({
+      top: this.movingCardOriTop + (e.pageY - this.mouseDownPageY) / this.scale,
+      left:
+        this.movingCardOriLeft + (e.pageX - this.mouseDownPageX) / this.scale
+    });
   };
 
   onWindowMouseUp = () => {
     if (this.$movingCard) {
       this.$movingCard.removeClass('grabbing');
+      this.$movingCard.css({
+        top: this.movingCardOriTop,
+        left: this.movingCardOriLeft
+      });
       this.$movingCard = null;
     }
   };
@@ -103,11 +125,13 @@ class CardArea extends PureComponent<CardAreaProps> {
     this.computeCanGrabIds();
     window.addEventListener('resize', this.resizeContainer);
     window.addEventListener('mouseup', this.onWindowMouseUp);
+    window.addEventListener('mousemove', this.onWindowMouseMove);
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.resizeContainer);
     window.removeEventListener('mouseup', this.onWindowMouseUp);
+    window.removeEventListener('mousemove', this.onWindowMouseMove);
     clearTimeout(this.resizeKey);
   }
 
@@ -120,9 +144,10 @@ class CardArea extends PureComponent<CardAreaProps> {
     const viewHeight = document.documentElement.clientHeight - 155;
     const viewWidth = document.documentElement.clientWidth;
     const scale = Math.min(viewHeight / 645, viewWidth / 1280);
+    this.scale = scale;
 
     this.$cardArea.css({
-      transform: `scale(${scale})`
+      transform: `scale(${scale}) translate(-50%)`
     });
   };
 
@@ -224,7 +249,7 @@ class CardArea extends PureComponent<CardAreaProps> {
             id={`card-${suit}-${number}`}
             suit={suit}
             number={number}
-            onMouseDown={() => this.onCardMouseDown(suit, number)}
+            onMouseDown={e => this.onCardMouseDown(e, suit, number)}
           />
         );
       }

@@ -38,9 +38,10 @@ const TopRow = styled.div`
 const CardAreaWrapper = styled.div`
   /* background: rgba(255, 0, 0, 0.2); */
   width: 100%;
-  display: flex;
+  /* display: flex;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: center; */
+  position: absolute;
 `;
 
 const StyledLogo = styled(Logo)`
