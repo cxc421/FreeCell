@@ -31,7 +31,7 @@ export type NormalCardProps = {
   number: number;
   style?: React.CSSProperties;
   id?: string;
-  onMouseDown?: () => void;
+  onMouseDown?: (e: React.MouseEvent) => void;
 };
 type CardProps = OpenCellProps | OpenFundationProps | NormalCardProps;
 
@@ -52,6 +52,7 @@ export enum CardSuit {
 }
 
 const Container = styled.div<ContainerProps>`
+  visibility: hidden;
   position: absolute;
   width: ${cardWidth}px;
   height: ${cardHeight}px;
@@ -336,6 +337,7 @@ const Card: React.FC<CardProps> = props => {
 
     return (
       <Container
+        className="card"
         type={props.type}
         suit={props.suit}
         style={cardStyle}

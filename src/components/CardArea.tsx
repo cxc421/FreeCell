@@ -1,310 +1,272 @@
-import React, { Component, createRef } from 'react';
+import React, { PureComponent } from 'react';
 import styled from 'styled-components';
+import $ from 'jquery';
 import Card, { CardType, CardSuit } from './Card';
 import { CardState } from '../CardState';
 
+// const defaultCardAreaWidth = 1280;
+// const defaultCardWidth = 100;
+// const defaultCardHeight = 140;
+// const defaultHorizontalPadding = 30;
+// const defaultCardAreaHeight = 645;
+// const defaultCardAreaRatio = defaultCardAreaWidth / defaultCardAreaHeight;
+
 interface CardAreaProps extends CardState {}
 
-type Pos = {
-  top: number;
-  left: number;
-};
+interface CardJqueryMap {
+  [key: string]: JQuery<HTMLDivElement>;
+}
 
-interface CardStyle {
-  cellPos: Pos[];
-  foundationPos: Pos[];
-  decksPos: Pos[];
-  scale: number;
-  vertShift: number;
+interface CanGrabIds {
+  [key: string]: string;
 }
 
 const Container = styled.div`
+  width: 1280px;
+  height: 645px;
+  background: rgba(255, 50, 240, 0.2);
+  transform-origin: center top;
   position: relative;
-  width: 100%;
-  height: 100%;
-`;
+  flex-shrink: 0;
 
-const defaultCardAreaWidth = 1280;
-const defaultCardWidth = 100;
-const defaultCardHeight = 140;
-const defaultHorizontalPadding = 30;
-const defaultCardAreaHeight = 645;
-const defaultCardAreaRatio = defaultCardAreaWidth / defaultCardAreaHeight;
-
-class CardArea extends Component<CardAreaProps> {
-  containerRef = createRef<HTMLDivElement>();
-  resizeKey: undefined | number = undefined;
-  movingDom: HTMLDivElement | null = null;
-  grabbing = false;
-  state = {
-    viewWidth: 0,
-    viewHeight: 0
-  };
-
-  onWindowResize = () => {
-    const container = this.containerRef.current;
-    if (!container) return;
-
-    clearTimeout(this.resizeKey);
-    this.resizeKey = setTimeout(() => {
-      this.setState({
-        viewWidth: container.clientWidth,
-        viewHeight: container.clientHeight
-      });
-    }, 300);
-  };
-
-  computeCardStyleInfo = (() => {
-    let cacheCardStyle: null | CardStyle = null;
-    let preViewWidth = 0;
-    let preViewHeight = 0;
-
-    return (cardAreaWidth: number, cardAreaHeight: number) => {
-      if (preViewWidth === cardAreaWidth && preViewHeight === cardAreaHeight) {
-        return cacheCardStyle;
-      } else {
-        preViewWidth = cardAreaWidth;
-        preViewHeight = cardAreaHeight;
-      }
-
-      const cardAreaRatio = cardAreaWidth / cardAreaHeight;
-      const isScaledByWidth = cardAreaRatio < defaultCardAreaRatio;
-      let scale = 0;
-      let pagePadding = 0;
-      if (isScaledByWidth) {
-        scale = cardAreaWidth / defaultCardAreaWidth;
-        pagePadding = 0;
-      } else {
-        scale = cardAreaHeight / defaultCardAreaHeight;
-        pagePadding = (cardAreaWidth - scale * defaultCardAreaWidth) / 2;
-      }
-
-      const cardWidth = scale * defaultCardWidth;
-      const cardHeight = scale * defaultCardHeight;
-      const horiPadding = scale * defaultHorizontalPadding;
-      const leftPadding = 2 * horiPadding;
-      const centerDis = 6 * horiPadding;
-      const k1 = cardWidth + horiPadding;
-      const k2 = pagePadding + leftPadding;
-      const k3 = k2 + centerDis + cardWidth;
-
-      const cellPos = [];
-      for (let i = 0; i < 4; i++) {
-        cellPos[i] = {
-          top: 0,
-          left: k2 + k1 * i
-        };
-      }
-
-      const foundationPos = [];
-      for (let i = 0; i < 4; i++) {
-        foundationPos[i] = {
-          top: 0,
-          left: k3 + k1 * (i + 3)
-        };
-      }
-
-      const deckTop = cardHeight + horiPadding;
-      const decksPos = [];
-      for (let i = 0; i < 4; i++) {
-        decksPos[i] = {
-          left: cellPos[i].left,
-          top: deckTop
-        };
-      }
-      for (let i = 0; i < 4; i++) {
-        decksPos[i + 4] = {
-          left: foundationPos[i].left,
-          top: deckTop
-        };
-      }
-
-      return (cacheCardStyle = {
-        cellPos,
-        foundationPos,
-        decksPos,
-        scale,
-        vertShift: horiPadding
-      });
-    };
-  })();
-
-  onCardMouseDown = (id: string) => {
-    this.movingDom = document.getElementById(id) as HTMLDivElement;
-  };
-
-  onWindowMouseMove = () => {};
-
-  onWindowMouseUp = () => {
-    if (this.movingDom) {
-      this.movingDom = null;
-    }
-  };
-
-  getCardListJSX(): JSX.Element[] {
-    const { viewWidth, viewHeight } = this.state;
-    if (!viewWidth || !viewHeight) return [];
-    const cardStyleInfo = this.computeCardStyleInfo(viewWidth, viewHeight);
-    if (!cardStyleInfo) return [];
-    const {
-      cellPos,
-      foundationPos,
-      decksPos,
-      scale,
-      vertShift
-    } = cardStyleInfo;
-    const { cells, foundations, decks } = this.props;
-    const cardListJSX: JSX.Element[] = [];
-
-    cells.forEach((cell, cellIndex) => {
-      const { top, left } = cellPos[cellIndex];
-
-      const id = `cells-${cellIndex}`;
-      cardListJSX.push(
-        <Card
-          id={id}
-          key={id}
-          type={CardType.OpenCell}
-          style={{
-            top,
-            left,
-            transform: `scale(${scale})`,
-            zIndex: 0
-          }}
-        />
-      );
-
-      cell.forEach((card, index) => {
-        const id = `card-${card.suit}-${card.number}`;
-        cardListJSX.push(
-          <Card
-            id={id}
-            key={id}
-            type={CardType.Card}
-            suit={card.suit}
-            number={card.number}
-            style={{
-              top,
-              left,
-              transform: `scale(${scale})`,
-              zIndex: index + 1,
-              cursor: 'grab'
-            }}
-          />
-        );
-      });
-    });
-
-    const foundationSuits = [
-      CardSuit.Spade,
-      CardSuit.Heart,
-      CardSuit.Club,
-      CardSuit.Diamond
-    ];
-
-    for (let foundIndex = 0; foundIndex < foundations.length; foundIndex++) {
-      const foundation = foundations[foundIndex];
-      const { left, top } = foundationPos[foundIndex];
-
-      const placementId = `found-${foundIndex}`;
-      const suit = foundationSuits[foundIndex];
-      cardListJSX.push(
-        <Card
-          id={placementId}
-          key={placementId}
-          type={CardType.OpenFundation}
-          suit={suit}
-          style={{
-            top,
-            left,
-            transform: `scale(${scale})`,
-            zIndex: 0
-          }}
-        />
-      );
-
-      for (let cardIndex = 0; cardIndex < foundation.length; cardIndex++) {
-        const card = foundation[cardIndex];
-        const id = `card-${card.suit}-${card.number}`;
-        cardListJSX.push(
-          <Card
-            id={id}
-            key={id}
-            type={CardType.Card}
-            suit={card.suit}
-            number={card.number}
-            style={{
-              top,
-              left,
-              transform: `scale(${scale})`,
-              zIndex: cardIndex + 1
-            }}
-          />
-        );
-      }
-    }
-
-    decks.forEach((deck, deckIndex) => {
-      const { top, left } = decksPos[deckIndex];
-
-      const id = `deck-${deckIndex}`;
-      cardListJSX.push(
-        <Card
-          id={id}
-          key={id}
-          type={CardType.OpenCell}
-          style={{
-            top,
-            left,
-            transform: `scale(${scale})`,
-            zIndex: 0
-          }}
-        />
-      );
-
-      deck.forEach((card, cardIndex) => {
-        const id = `card-${card.suit}-${card.number}`;
-        cardListJSX.push(
-          <Card
-            id={id}
-            key={id}
-            type={CardType.Card}
-            suit={card.suit}
-            number={card.number}
-            style={{
-              top: top + vertShift * cardIndex,
-              left,
-              transform: `scale(${scale})`,
-              zIndex: cardIndex + 1,
-              cursor: cardIndex === deck.length - 1 ? 'grab' : 'default'
-            }}
-            onMouseDown={() => this.onCardMouseDown(id)}
-          />
-        );
-      });
-    });
-
-    return cardListJSX;
+  .can-grab {
+    cursor: grab;
   }
 
+  .grabbing {
+    cursor: grabbing !important;
+  }
+`;
+
+class CardArea extends PureComponent<CardAreaProps> {
+  cardAreaRef = React.createRef<HTMLDivElement>();
+  $cardArea: JQuery<HTMLDivElement> = $('');
+  resizeKey: number | undefined = undefined;
+  $cardMap: CardJqueryMap = {};
+  canGrabIds: CanGrabIds = {};
+  $movingCard: JQuery<HTMLDivElement> | null = null;
+
+  getJqueryDom(id: string) {
+    if (this.$cardMap[id]) return this.$cardMap[id];
+    return (this.$cardMap[id] = this.$cardArea.find(id));
+  }
+
+  computeCanGrabIds() {
+    const { decks, cells } = this.props;
+    const canGrabIds: CanGrabIds = {};
+
+    const $prevCanGrabCards = this.$cardArea.find('.can-grab');
+    $prevCanGrabCards.removeClass('can-grab');
+
+    decks.forEach(deck => {
+      const deckLen = deck.length;
+      if (deckLen > 0) {
+        const card = deck[deckLen - 1];
+        const id = `#card-${card.suit}-${card.number}`;
+        this.getJqueryDom(id).addClass('can-grab');
+        canGrabIds[id] = id;
+      }
+    });
+    cells.forEach(deck => {
+      const deckLen = deck.length;
+      if (deckLen > 0) {
+        const card = deck[0];
+        const id = `#card-${card.suit}-${card.number}`;
+        this.getJqueryDom(id).addClass('can-grab');
+        canGrabIds[id] = id;
+      }
+    });
+    this.canGrabIds = canGrabIds;
+  }
+
+  onCardMouseDown = (suit: CardSuit, number: number) => {
+    const id = `#card-${suit}-${number}`;
+    if (this.canGrabIds.hasOwnProperty(id)) {
+      this.$movingCard = this.getJqueryDom(id);
+      this.$movingCard.addClass('grabbing');
+    }
+  };
+
+  onWindowMouseUp = () => {
+    if (this.$movingCard) {
+      this.$movingCard.removeClass('grabbing');
+      this.$movingCard = null;
+    }
+  };
+
   componentDidMount() {
-    window.addEventListener('resize', this.onWindowResize);
-    window.addEventListener('mousemove', this.onWindowMouseMove);
+    const cardAreaDom = this.cardAreaRef.current as HTMLDivElement;
+    this.$cardArea = $(cardAreaDom);
+    this.resizeContainer();
+    this.initPlacementPos();
+    this.updateCardPos();
+    this.computeCanGrabIds();
+    window.addEventListener('resize', this.resizeContainer);
     window.addEventListener('mouseup', this.onWindowMouseUp);
-    this.onWindowResize();
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.onWindowResize);
-    window.removeEventListener('mousemove', this.onWindowMouseMove);
+    window.removeEventListener('resize', this.resizeContainer);
     window.removeEventListener('mouseup', this.onWindowMouseUp);
     clearTimeout(this.resizeKey);
   }
 
-  render() {
-    const cardListJSX = this.getCardListJSX();
+  componentDidUpdate() {
+    this.updateCardPos();
+    this.computeCanGrabIds();
+  }
 
-    return <Container ref={this.containerRef}>{cardListJSX}</Container>;
+  resizeContainer = () => {
+    const viewHeight = document.documentElement.clientHeight - 155;
+    const viewWidth = document.documentElement.clientWidth;
+    const scale = Math.min(viewHeight / 645, viewWidth / 1280);
+
+    this.$cardArea.css({
+      transform: `scale(${scale})`
+    });
+  };
+
+  onWindowResize = () => {
+    clearTimeout(this.resizeKey);
+    this.resizeKey = setTimeout(this.resizeContainer, 300);
+  };
+
+  initPlacementPos = () => {
+    const xPos = [60, 190, 320, 450, 730, 860, 990, 1120];
+
+    for (let i = 0; i < 4; i++) {
+      const $cell = this.getJqueryDom(`#cell-${i}`);
+      $cell.css({
+        visibility: 'visible',
+        left: xPos[i],
+        top: 0
+      });
+      const $found = this.getJqueryDom(`#found-${i}`);
+      $found.css({
+        visibility: 'visible',
+        left: xPos[i + 4],
+        top: 0
+      });
+    }
+
+    for (let i = 0; i < 8; i++) {
+      const $deck = this.getJqueryDom(`#deck-${i}`);
+      $deck.css({
+        visibility: 'visible',
+        left: xPos[i],
+        top: 170
+      });
+    }
+  };
+
+  updateCardPos = () => {
+    const { decks, cells, foundations } = this.props;
+    const xPos = [60, 190, 320, 450, 730, 860, 990, 1120];
+    const yPos = 170;
+
+    decks.forEach((deck, deckIndex) => {
+      const leftPos = xPos[deckIndex];
+      deck.forEach((card, cardIndex) => {
+        const $card = this.getJqueryDom(`#card-${card.suit}-${card.number}`);
+        $card.css({
+          visibility: 'visible',
+          left: leftPos,
+          top: yPos + 30 * cardIndex,
+          zIndex: cardIndex + 1
+        });
+      });
+    });
+
+    cells.forEach((cell, cellIndex) => {
+      const leftPos = xPos[cellIndex];
+      cell.forEach((card, cardIndex) => {
+        const $card = this.getJqueryDom(`#card-${card.suit}-${card.number}`);
+        $card.css({
+          visibility: 'visible',
+          left: leftPos,
+          top: 0,
+          zIndex: cardIndex + 1
+        });
+      });
+    });
+
+    for (let foundIndex = 0; foundIndex < foundations.length; foundIndex++) {
+      const found = foundations[foundIndex];
+      const leftPos = xPos[foundIndex + 4];
+      for (let cardIndex = 0; cardIndex < found.length; cardIndex++) {
+        const card = found[cardIndex];
+        const $card = this.getJqueryDom(`#card-${card.suit}-${card.number}`);
+        $card.css({
+          visibility: 'visible',
+          left: leftPos,
+          top: 0,
+          zIndex: cardIndex + 1
+        });
+      }
+    }
+  };
+
+  render() {
+    const cardList: JSX.Element[] = [];
+    const suitList = [
+      CardSuit.Club,
+      CardSuit.Diamond,
+      CardSuit.Heart,
+      CardSuit.Spade
+    ];
+    for (let i = suitList.length - 1; i >= 0; i--) {
+      const suit = suitList[i];
+      for (let number = 1; number <= 13; number++) {
+        cardList.push(
+          <Card
+            type={CardType.Card}
+            key={`card-${suit}-${number}`}
+            id={`card-${suit}-${number}`}
+            suit={suit}
+            number={number}
+            onMouseDown={() => this.onCardMouseDown(suit, number)}
+          />
+        );
+      }
+    }
+
+    return (
+      <Container ref={this.cardAreaRef}>
+        {/* cell */}
+        <Card type={CardType.OpenCell} id="cell-0" />
+        <Card type={CardType.OpenCell} id="cell-1" />
+        <Card type={CardType.OpenCell} id="cell-2" />
+        <Card type={CardType.OpenCell} id="cell-3" />
+        {/* found */}
+        <Card type={CardType.OpenFundation} suit={CardSuit.Club} id="found-0" />
+        <Card
+          type={CardType.OpenFundation}
+          suit={CardSuit.Diamond}
+          id="found-1"
+        />
+        <Card
+          type={CardType.OpenFundation}
+          suit={CardSuit.Heart}
+          id="found-2"
+        />
+        <Card
+          type={CardType.OpenFundation}
+          suit={CardSuit.Spade}
+          id="found-3"
+        />
+        {/* deck  */}
+        <Card type={CardType.OpenCell} id="deck-0" />
+        <Card type={CardType.OpenCell} id="deck-1" />
+        <Card type={CardType.OpenCell} id="deck-2" />
+        <Card type={CardType.OpenCell} id="deck-3" />
+        <Card type={CardType.OpenCell} id="deck-4" />
+        <Card type={CardType.OpenCell} id="deck-5" />
+        <Card type={CardType.OpenCell} id="deck-6" />
+        <Card type={CardType.OpenCell} id="deck-7" />
+        {/* card */}
+        {cardList}
+      </Container>
+    );
   }
 }
 

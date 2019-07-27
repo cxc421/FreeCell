@@ -35,9 +35,8 @@ const TopRow = styled.div`
   height: ${topRowHeight}px;
 `;
 
-const BottomRow = styled.div`
-  position: relative;
-  height: calc(100% - ${topRowHeight}px);
+const CardAreaWrapper = styled.div`
+  /* background: rgba(255, 0, 0, 0.2); */
   width: 100%;
   display: flex;
   align-items: flex-start;
@@ -120,9 +119,9 @@ const App: React.FC = () => {
             <Time>Time: 2:19</Time>
             <Score>Score: 02</Score>
           </TimeScoreArea>
-          <BottomRow>
+          <CardAreaWrapper>
             <CardArea cells={cells} decks={decks} foundations={foundations} />
-          </BottomRow>
+          </CardAreaWrapper>
         </Content>
       </>
     );
