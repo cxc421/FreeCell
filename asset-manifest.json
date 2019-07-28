@@ -1,0 +1,29 @@
+{
+  "files": {
+    "main.css": "/FreeCell/static/css/main.ffdd441f.chunk.css",
+    "main.js": "/FreeCell/static/js/main.9c51a139.chunk.js",
+    "main.js.map": "/FreeCell/static/js/main.9c51a139.chunk.js.map",
+    "runtime~main.js": "/FreeCell/static/js/runtime~main.8ae443eb.js",
+    "runtime~main.js.map": "/FreeCell/static/js/runtime~main.8ae443eb.js.map",
+    "static/js/2.5c4a30c5.chunk.js": "/FreeCell/static/js/2.5c4a30c5.chunk.js",
+    "static/js/2.5c4a30c5.chunk.js.map": "/FreeCell/static/js/2.5c4a30c5.chunk.js.map",
+    "index.html": "/FreeCell/index.html",
+    "precache-manifest.1ce74cc1111cbbe79c1818b6254afb12.js": "/FreeCell/precache-manifest.1ce74cc1111cbbe79c1818b6254afb12.js",
+    "service-worker.js": "/FreeCell/service-worker.js",
+    "static/css/main.ffdd441f.chunk.css.map": "/FreeCell/static/css/main.ffdd441f.chunk.css.map",
+    "static/media/bg-img-main.c624ae4b.svg": "/FreeCell/static/media/bg-img-main.c624ae4b.svg",
+    "static/media/bg-img-wellcome.47f7e23c.svg": "/FreeCell/static/media/bg-img-wellcome.47f7e23c.svg",
+    "static/media/icon-club.5a9d3fcb.svg": "/FreeCell/static/media/icon-club.5a9d3fcb.svg",
+    "static/media/icon-diamond.529ba365.svg": "/FreeCell/static/media/icon-diamond.529ba365.svg",
+    "static/media/icon-heart.b2863172.svg": "/FreeCell/static/media/icon-heart.b2863172.svg",
+    "static/media/icon-pause.b2f85c18.svg": "/FreeCell/static/media/icon-pause.b2f85c18.svg",
+    "static/media/icon-prev-step.59c73238.svg": "/FreeCell/static/media/icon-prev-step.59c73238.svg",
+    "static/media/icon-question.d967c257.svg": "/FreeCell/static/media/icon-question.d967c257.svg",
+    "static/media/icon-replay.e3794bf8.svg": "/FreeCell/static/media/icon-replay.e3794bf8.svg",
+    "static/media/icon-spades.fcd5e780.svg": "/FreeCell/static/media/icon-spades.fcd5e780.svg",
+    "static/media/logo.a9f0452a.svg": "/FreeCell/static/media/logo.a9f0452a.svg",
+    "static/media/pic-card-elf.c29189fe.svg": "/FreeCell/static/media/pic-card-elf.c29189fe.svg",
+    "static/media/pic-card-king.d8489137.svg": "/FreeCell/static/media/pic-card-king.d8489137.svg",
+    "static/media/pic-card-knight.92a4da43.svg": "/FreeCell/static/media/pic-card-knight.92a4da43.svg"
+  }
+}
