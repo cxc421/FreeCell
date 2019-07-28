@@ -89,7 +89,18 @@ const Time = styled.div`
 `;
 
 const App: React.FC = () => {
-  const [page, setPage] = useState(Page.Game);
+  const [page, setPage] = useState(Page.Intro);
+  const introWrapperStyle: React.CSSProperties = {
+    // transition: 'opacity 300ms ease 0s, visibility 3000ms ease 0s',
+    opacity: page === Page.Intro ? 1 : 0,
+    visibility: page === Page.Intro ? 'visible' : 'hidden'
+  };
+  const gameWrapperStyle: React.CSSProperties = {
+    // transition: 'opacity 1s ease 300ms, visibility 1s ease 300ms',
+    opacity: page === Page.Game ? 1 : 0,
+    visibility: page === Page.Game ? 'visible' : 'hidden'
+  };
+
   const {
     decks,
     foundations,
@@ -127,11 +138,14 @@ const App: React.FC = () => {
     }
   }
 
-  if (page === Page.Game) {
-    return (
-      <>
-        <Background highBg={true} />
-        <Content>
+  return (
+    <>
+      <Background highBg={page === Page.Game} />
+      <Content>
+        <div style={introWrapperStyle}>
+          <IntroBlock onClickStartBtn={() => setPage(Page.Game)} />
+        </div>
+        <div style={gameWrapperStyle}>
           <TopRow>
             <StyledLogo />
             <BtnArea>
@@ -148,8 +162,8 @@ const App: React.FC = () => {
               iconColor="white"
               hoverStyle="color"
             />
-            <Time>Time: 2:19</Time>
-            <Score>Score: 02</Score>
+            <Time>Time: 0:00</Time>
+            <Score>Score: 00</Score>
           </TimeScoreArea>
           <CardAreaWrapper>
             <CardArea
@@ -159,16 +173,7 @@ const App: React.FC = () => {
               moveCard={moveCard}
             />
           </CardAreaWrapper>
-        </Content>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Background highBg={false} />
-      <Content>
-        <IntroBlock onClickStartBtn={() => setPage(Page.Game)} />
+        </div>
       </Content>
     </>
   );
