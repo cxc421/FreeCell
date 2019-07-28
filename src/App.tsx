@@ -90,11 +90,17 @@ const Time = styled.div`
 
 const App: React.FC = () => {
   const [page, setPage] = useState(Page.Game);
-  const { decks, foundations, cells, moveDeckCardToCell } = useCardState();
-
-  function test() {
-    moveDeckCardToCell(0, 3);
-  }
+  const {
+    decks,
+    foundations,
+    cells,
+    moveCardFromDeckToCell,
+    moveCardFromCellToDeck,
+    moveCardFromCellToCell,
+    moveCardFromDeckToDeck,
+    moveCardFromCellToFound,
+    moveCardFromDeckToFound
+  } = useCardState();
 
   function moveCard(
     fromType: CardType,
@@ -104,7 +110,19 @@ const App: React.FC = () => {
   ) {
     if (fromType === CardType.Card) {
       if (toType === CardType.OpenCell) {
-        moveDeckCardToCell(fromIndex, toIndex);
+        moveCardFromDeckToCell(fromIndex, toIndex);
+      } else if (toType === CardType.Card) {
+        moveCardFromDeckToDeck(fromIndex, toIndex);
+      } else {
+        moveCardFromDeckToFound(fromIndex, toIndex);
+      }
+    } else {
+      if (toType === CardType.Card) {
+        moveCardFromCellToDeck(fromIndex, toIndex);
+      } else if (toType === CardType.OpenCell) {
+        moveCardFromCellToCell(fromIndex, toIndex);
+      } else {
+        moveCardFromCellToFound(fromIndex, toIndex);
       }
     }
   }
@@ -129,7 +147,6 @@ const App: React.FC = () => {
               textColor="white"
               iconColor="white"
               hoverStyle="color"
-              onClick={test}
             />
             <Time>Time: 2:19</Time>
             <Score>Score: 02</Score>

@@ -263,6 +263,7 @@ class CardArea extends PureComponent<CardAreaProps> {
       this.$movingCard.removeClass('dropping');
       this.$movingCard.removeClass('reversing');
       this.$movingCard = null;
+      this.toDropId = null;
     }
   };
 

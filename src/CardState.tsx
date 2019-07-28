@@ -18,12 +18,13 @@ export type DecksType = [
   Card[]
 ];
 export type CellsType = [Card[], Card[], Card[], Card[]];
-export type FoundationsType = [
-  SpadeCard[],
-  HeartCard[],
-  ClubCard[],
-  DiamondCard[]
-];
+// export type FoundationsType = [
+//   SpadeCard[],
+//   HeartCard[],
+//   ClubCard[],
+//   DiamondCard[]
+// ];
+export type FoundationsType = CellsType;
 
 export interface CardState {
   cells: CellsType; // Need to check length 1
@@ -116,32 +117,91 @@ function getRandomDecks() {
 }
 
 enum ActionType {
-  MoveCardFromDeckToCell
+  MoveCardFromDeckToCell,
+  MoveCardFromCellToDeck,
+  MoveCardFromDeckToDeck,
+  MoveCardFromCellToCell,
+  MoveCardFromDeckToFound,
+  MoveCardFromCellToFound
 }
 
-type MovaCardFromDeckToCellAction = {
-  type: ActionType.MoveCardFromDeckToCell;
-  deckIndex: number;
-  cellIndex: number;
+type Action = {
+  type: ActionType;
+  fromIndex: number;
+  toIndex: number;
 };
-
-type Action = MovaCardFromDeckToCellAction;
 
 function reducer(state: CardState, action: Action): CardState {
   switch (action.type) {
     case ActionType.MoveCardFromDeckToCell: {
       const newDecks = Array.from(state.decks) as DecksType;
-      const movedCard = newDecks[action.deckIndex].pop();
+      const movedCard = newDecks[action.fromIndex].pop();
       const newCells = Array.from(state.cells) as CellsType;
-      if (!movedCard || newCells[action.cellIndex].length > 0) {
+      if (!movedCard) {
         return state;
       }
-      newCells[action.cellIndex].push(movedCard);
+      newCells[action.toIndex].push(movedCard);
 
       return {
         ...state,
         decks: newDecks,
         cells: newCells
+      };
+    }
+    case ActionType.MoveCardFromCellToDeck: {
+      const newDecks = Array.from(state.decks) as DecksType;
+      const newCells = Array.from(state.cells) as CellsType;
+      const movedCard = newCells[action.fromIndex].pop();
+      if (!movedCard) return state;
+      newDecks[action.toIndex].push(movedCard);
+      return {
+        ...state,
+        decks: newDecks,
+        cells: newCells
+      };
+    }
+    case ActionType.MoveCardFromCellToCell: {
+      const newCells = Array.from(state.cells) as CellsType;
+      const movedCard = newCells[action.fromIndex].pop();
+      if (!movedCard) return state;
+      newCells[action.toIndex].push(movedCard);
+      return {
+        ...state,
+        cells: newCells
+      };
+    }
+    case ActionType.MoveCardFromDeckToDeck: {
+      const newDeck = Array.from(state.decks) as DecksType;
+      const movedCard = newDeck[action.fromIndex].pop();
+      if (!movedCard) return state;
+      newDeck[action.toIndex].push(movedCard);
+      return {
+        ...state,
+        decks: newDeck
+      };
+    }
+    case ActionType.MoveCardFromCellToFound: {
+      const newCells = Array.from(state.cells) as CellsType;
+      const newFound = Array.from(state.foundations) as FoundationsType;
+      const movedCard = newCells[action.fromIndex].pop();
+      if (!movedCard) return state;
+      newFound[action.toIndex].push(movedCard);
+      return {
+        ...state,
+        cells: newCells,
+        foundations: newFound
+      };
+    }
+    case ActionType.MoveCardFromDeckToFound: {
+      const newDecks = Array.from(state.decks) as DecksType;
+      const newFound = Array.from(state.foundations) as FoundationsType;
+      const movedCard = newDecks[action.fromIndex].pop();
+      if (!movedCard) return state;
+      newFound[action.toIndex].push(movedCard);
+      return {
+        ...state,
+        decks: newDecks,
+        foundations: newFound
       };
     }
     default:
@@ -156,16 +216,61 @@ export function useCardState() {
   }
   const [state, dispatch] = context;
 
-  function moveDeckCardToCell(deckIndex: number, cellIndex: number) {
+  function moveCardFromDeckToCell(fromIndex: number, toIndex: number) {
     dispatch({
       type: ActionType.MoveCardFromDeckToCell,
-      deckIndex,
-      cellIndex
+      fromIndex,
+      toIndex
+    });
+  }
+
+  function moveCardFromCellToDeck(fromIndex: number, toIndex: number) {
+    dispatch({
+      type: ActionType.MoveCardFromCellToDeck,
+      fromIndex,
+      toIndex
+    });
+  }
+
+  function moveCardFromCellToCell(fromIndex: number, toIndex: number) {
+    dispatch({
+      type: ActionType.MoveCardFromCellToCell,
+      fromIndex,
+      toIndex
+    });
+  }
+
+  function moveCardFromDeckToDeck(fromIndex: number, toIndex: number) {
+    dispatch({
+      type: ActionType.MoveCardFromDeckToDeck,
+      fromIndex,
+      toIndex
+    });
+  }
+
+  function moveCardFromCellToFound(fromIndex: number, toIndex: number) {
+    dispatch({
+      type: ActionType.MoveCardFromCellToFound,
+      fromIndex,
+      toIndex
+    });
+  }
+
+  function moveCardFromDeckToFound(fromIndex: number, toIndex: number) {
+    dispatch({
+      type: ActionType.MoveCardFromDeckToFound,
+      fromIndex,
+      toIndex
     });
   }
 
   return {
     ...state,
-    moveDeckCardToCell
+    moveCardFromDeckToCell,
+    moveCardFromCellToDeck,
+    moveCardFromCellToCell,
+    moveCardFromDeckToDeck,
+    moveCardFromCellToFound,
+    moveCardFromDeckToFound
   };
 }
