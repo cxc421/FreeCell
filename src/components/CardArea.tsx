@@ -17,12 +17,11 @@ interface CanGrabIds {
 const Container = styled.div`
   width: 1280px;
   height: 645px;
-  background: rgba(255, 50, 240, 0.2);
+  /* background: rgba(255, 50, 240, 0.2); */
   transform-origin: 0 0;
   position: relative;
   left: 50%;
   flex-shrink: 0;
-  /* user-select: none; */
 
   .can-grab {
     cursor: grab;
@@ -31,7 +30,11 @@ const Container = styled.div`
   .grabbing {
     cursor: grabbing !important;
     transition: all 0ms ease-in-out !important;
-    z-index: 9999 !important;
+    z-index: 10000 !important;
+  }
+  .dropping {
+    cursor: grabbing !important;
+    z-index: 10000 !important;
   }
 `;
 
@@ -47,6 +50,8 @@ class CardArea extends PureComponent<CardAreaProps> {
   mouseDownPageX = 0;
   mouseDownPageY = 0;
   scale = 1;
+  canCardMouseDown = true;
+  canCardMove = false;
 
   getJqueryDom(id: string) {
     if (this.$cardMap[id]) return this.$cardMap[id];
@@ -83,20 +88,20 @@ class CardArea extends PureComponent<CardAreaProps> {
 
   onCardMouseDown = (e: React.MouseEvent, suit: CardSuit, number: number) => {
     const id = `#card-${suit}-${number}`;
-    if (this.canGrabIds.hasOwnProperty(id)) {
+    if (this.canGrabIds.hasOwnProperty(id) && this.canCardMouseDown) {
       this.$movingCard = this.getJqueryDom(id);
       this.$movingCard.addClass('grabbing');
       this.movingCardOriTop = parseInt(this.$movingCard.css('top'), 10);
       this.movingCardOriLeft = parseInt(this.$movingCard.css('left'), 10);
       this.mouseDownPageX = e.pageX;
       this.mouseDownPageY = e.pageY;
+      this.canCardMouseDown = false;
+      this.canCardMove = true;
     }
   };
 
   onWindowMouseMove = (e: MouseEvent) => {
-    if (!this.$movingCard) return;
-
-    console.log(this.scale);
+    if (!this.$movingCard || !this.canCardMove) return;
 
     this.$movingCard.css({
       top: this.movingCardOriTop + (e.pageY - this.mouseDownPageY) / this.scale,
@@ -106,13 +111,17 @@ class CardArea extends PureComponent<CardAreaProps> {
   };
 
   onWindowMouseUp = () => {
-    if (this.$movingCard) {
+    if (this.$movingCard && this.canCardMove) {
       this.$movingCard.removeClass('grabbing');
+      this.$movingCard.addClass('dropping');
       this.$movingCard.css({
         top: this.movingCardOriTop,
         left: this.movingCardOriLeft
       });
-      this.$movingCard = null;
+      this.canCardMove = false;
+      setTimeout(() => {
+        this.canCardMouseDown = true;
+      }, 200);
     }
   };
 
@@ -256,41 +265,47 @@ class CardArea extends PureComponent<CardAreaProps> {
     }
 
     return (
-      <Container ref={this.cardAreaRef}>
-        {/* cell */}
-        <Card type={CardType.OpenCell} id="cell-0" />
-        <Card type={CardType.OpenCell} id="cell-1" />
-        <Card type={CardType.OpenCell} id="cell-2" />
-        <Card type={CardType.OpenCell} id="cell-3" />
-        {/* found */}
-        <Card type={CardType.OpenFundation} suit={CardSuit.Club} id="found-0" />
-        <Card
-          type={CardType.OpenFundation}
-          suit={CardSuit.Diamond}
-          id="found-1"
-        />
-        <Card
-          type={CardType.OpenFundation}
-          suit={CardSuit.Heart}
-          id="found-2"
-        />
-        <Card
-          type={CardType.OpenFundation}
-          suit={CardSuit.Spade}
-          id="found-3"
-        />
-        {/* deck  */}
-        <Card type={CardType.OpenCell} id="deck-0" />
-        <Card type={CardType.OpenCell} id="deck-1" />
-        <Card type={CardType.OpenCell} id="deck-2" />
-        <Card type={CardType.OpenCell} id="deck-3" />
-        <Card type={CardType.OpenCell} id="deck-4" />
-        <Card type={CardType.OpenCell} id="deck-5" />
-        <Card type={CardType.OpenCell} id="deck-6" />
-        <Card type={CardType.OpenCell} id="deck-7" />
-        {/* card */}
-        {cardList}
-      </Container>
+      <>
+        <Container ref={this.cardAreaRef}>
+          {/* cell */}
+          <Card type={CardType.OpenCell} id="cell-0" />
+          <Card type={CardType.OpenCell} id="cell-1" />
+          <Card type={CardType.OpenCell} id="cell-2" />
+          <Card type={CardType.OpenCell} id="cell-3" />
+          {/* found */}
+          <Card
+            type={CardType.OpenFundation}
+            suit={CardSuit.Club}
+            id="found-0"
+          />
+          <Card
+            type={CardType.OpenFundation}
+            suit={CardSuit.Diamond}
+            id="found-1"
+          />
+          <Card
+            type={CardType.OpenFundation}
+            suit={CardSuit.Heart}
+            id="found-2"
+          />
+          <Card
+            type={CardType.OpenFundation}
+            suit={CardSuit.Spade}
+            id="found-3"
+          />
+          {/* deck  */}
+          <Card type={CardType.OpenCell} id="deck-0" />
+          <Card type={CardType.OpenCell} id="deck-1" />
+          <Card type={CardType.OpenCell} id="deck-2" />
+          <Card type={CardType.OpenCell} id="deck-3" />
+          <Card type={CardType.OpenCell} id="deck-4" />
+          <Card type={CardType.OpenCell} id="deck-5" />
+          <Card type={CardType.OpenCell} id="deck-6" />
+          <Card type={CardType.OpenCell} id="deck-7" />
+          {/* card */}
+          {cardList}
+        </Container>
+      </>
     );
   }
 }
