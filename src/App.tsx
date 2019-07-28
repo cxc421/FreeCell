@@ -4,6 +4,7 @@ import Background from './components/Background';
 import IntroBlock from './components/IntroBlock';
 import CtrlBtn from './components/CtrlBtn';
 import CardArea from './components/CardArea';
+import { CardType } from './components/Card';
 import { ReactComponent as Logo } from './assets/logo.svg';
 import { ReactComponent as PauseIcon } from './assets/icon-pause.svg';
 import { ReactComponent as ReplayIcon } from './assets/icon-replay.svg';
@@ -95,6 +96,19 @@ const App: React.FC = () => {
     moveDeckCardToCell(0, 3);
   }
 
+  function moveCard(
+    fromType: CardType,
+    fromIndex: number,
+    toType: CardType,
+    toIndex: number
+  ) {
+    if (fromType === CardType.Card) {
+      if (toType === CardType.OpenCell) {
+        moveDeckCardToCell(fromIndex, toIndex);
+      }
+    }
+  }
+
   if (page === Page.Game) {
     return (
       <>
@@ -121,7 +135,12 @@ const App: React.FC = () => {
             <Score>Score: 02</Score>
           </TimeScoreArea>
           <CardAreaWrapper>
-            <CardArea cells={cells} decks={decks} foundations={foundations} />
+            <CardArea
+              cells={cells}
+              decks={decks}
+              foundations={foundations}
+              moveCard={moveCard}
+            />
           </CardAreaWrapper>
         </Content>
       </>

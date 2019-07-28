@@ -4,15 +4,29 @@ import $ from 'jquery';
 import Card, { CardType, CardSuit } from './Card';
 import { CardState } from '../CardState';
 
-interface CardAreaProps extends CardState {}
+interface CardAreaProps extends CardState {
+  moveCard: (
+    fromType: CardType,
+    fromIndex: number,
+    toType: CardType,
+    toIndex: number
+  ) => void;
+}
 
 interface CardJqueryMap {
   [key: string]: JQuery<HTMLDivElement>;
 }
 
-interface CanGrabIds {
-  [key: string]: string;
+interface CardInfo {
+  type: CardType;
+  index: number;
 }
+
+interface CanGrabIds {
+  [key: string]: CardInfo;
+}
+
+type CanDropIds = CanGrabIds;
 
 const Container = styled.div`
   width: 1280px;
@@ -29,13 +43,16 @@ const Container = styled.div`
 
   .grabbing {
     cursor: grabbing !important;
-    transition: all 0ms ease-in-out !important;
     z-index: 10000 !important;
   }
 
   .dropping {
-    cursor: grabbing !important;
     z-index: 10000 !important;
+  }
+
+  .reversing {
+    z-index: 10000 !important;
+    transition: top 100ms ease-in-out, left 100ms ease-in-out !important;
   }
 
   .overlap {
@@ -47,8 +64,10 @@ class CardArea extends PureComponent<CardAreaProps> {
   cardAreaRef = React.createRef<HTMLDivElement>();
   $cardArea: JQuery<HTMLDivElement> = $('');
   resizeKey: number | undefined = undefined;
+  releaseMovingCardKey: number | undefined = undefined;
   $cardMap: CardJqueryMap = {};
   canGrabIds: CanGrabIds = {};
+  canDropIds: CanDropIds = {};
   $movingCard: JQuery<HTMLDivElement> | null = null;
   movingCardOriTop = 0;
   movingCardOriLeft = 0;
@@ -57,8 +76,7 @@ class CardArea extends PureComponent<CardAreaProps> {
   scale = 1;
   canCardMouseDown = true;
   canCardMove = false;
-  canMovingCardDropIDs: string[] = [];
-  $preOverlapDom: JQuery<HTMLDivElement> = $('');
+  toDropId: string | null = null;
 
   getJqueryDom(id: string) {
     if (this.$cardMap[id]) return this.$cardMap[id];
@@ -72,35 +90,44 @@ class CardArea extends PureComponent<CardAreaProps> {
     const $prevCanGrabCards = this.$cardArea.find('.can-grab');
     $prevCanGrabCards.removeClass('can-grab');
 
-    decks.forEach(deck => {
+    decks.forEach((deck, deckIndex) => {
       const deckLen = deck.length;
       if (deckLen > 0) {
         const card = deck[deckLen - 1];
         const id = `#card-${card.suit}-${card.number}`;
         this.getJqueryDom(id).addClass('can-grab');
-        canGrabIds[id] = id;
+        canGrabIds[id] = {
+          type: CardType.Card,
+          index: deckIndex
+        };
       }
     });
-    cells.forEach(deck => {
+    cells.forEach((deck, cellIndex) => {
       const deckLen = deck.length;
       if (deckLen > 0) {
         const card = deck[0];
         const id = `#card-${card.suit}-${card.number}`;
         this.getJqueryDom(id).addClass('can-grab');
-        canGrabIds[id] = id;
+        canGrabIds[id] = {
+          type: CardType.OpenCell,
+          index: cellIndex
+        };
       }
     });
     this.canGrabIds = canGrabIds;
   }
 
-  computeCanDropDoms(suit: CardSuit, number: number) {
+  computeCanDropIds(suit: CardSuit, number: number) {
     const { decks, cells, foundations } = this.props;
-    const result: string[] = [];
+    const result: CanDropIds = {};
 
     cells.forEach((cell, cellIndex) => {
       if (cell.length === 0) {
         const id = '#cell-' + cellIndex;
-        result.push(id);
+        result[id] = {
+          type: CardType.OpenCell,
+          index: cellIndex
+        };
       }
     });
 
@@ -119,7 +146,10 @@ class CardArea extends PureComponent<CardAreaProps> {
       if (found.length === 0) {
         if (number === 1) {
           const id = '#found-' + founIndex;
-          result.push(id);
+          result[id] = {
+            type: CardType.OpenFundation,
+            index: founIndex
+          };
         }
         break;
       }
@@ -127,7 +157,10 @@ class CardArea extends PureComponent<CardAreaProps> {
       const lastCard = found[found.length - 1];
       if (lastCard.number === number - 1) {
         const id = `#card-${lastCard.suit}-${lastCard.number}`;
-        result.push(id);
+        result[id] = {
+          type: CardType.OpenFundation,
+          index: founIndex
+        };
         break;
       }
     }
@@ -144,17 +177,23 @@ class CardArea extends PureComponent<CardAreaProps> {
     decks.forEach((deck, deckIndex) => {
       if (deck.length === 0) {
         const id = `#deck-${deckIndex}`;
-        result.push(id);
+        result[id] = {
+          type: CardType.Card,
+          index: deckIndex
+        };
       } else {
         const lastCard = deck[deck.length - 1];
         if (lastCard.number === number + 1 && validSuit[lastCard.suit]) {
           const id = `#card-${lastCard.suit}-${lastCard.number}`;
-          result.push(id);
+          result[id] = {
+            type: CardType.Card,
+            index: deckIndex
+          };
         }
       }
     });
 
-    this.canMovingCardDropIDs = result;
+    this.canDropIds = result;
     console.log(result);
   }
 
@@ -169,7 +208,7 @@ class CardArea extends PureComponent<CardAreaProps> {
       this.mouseDownPageY = e.pageY;
       this.canCardMouseDown = false;
       this.canCardMove = true;
-      this.computeCanDropDoms(suit, number);
+      this.computeCanDropIds(suit, number);
     }
   };
 
@@ -190,10 +229,10 @@ class CardArea extends PureComponent<CardAreaProps> {
   };
 
   checkOverlap(top: number, left: number) {
-    let $closest: JQuery<HTMLDivElement> | null = null;
+    let closestId: string | null = null;
     let minDis = Number.MAX_SAFE_INTEGER;
 
-    this.canMovingCardDropIDs.forEach(id => {
+    Object.keys(this.canDropIds).forEach(id => {
       const $dom = this.getJqueryDom(id);
       const yDiff = Math.abs(top - parseInt($dom.css('top')));
       const xDiff = Math.abs(left - parseInt($dom.css('left')));
@@ -201,35 +240,64 @@ class CardArea extends PureComponent<CardAreaProps> {
         const dis = Math.pow(xDiff, 2) + Math.pow(yDiff, 2);
         if (dis < minDis) {
           minDis = dis;
-          $closest = $dom;
+          closestId = id;
         }
       }
     });
 
-    this.$preOverlapDom.removeClass('overlap');
-    if ($closest) {
-      let $tmp = $closest as JQuery<HTMLDivElement>;
-      $tmp.addClass('overlap');
-      this.$preOverlapDom = $tmp;
+    if (this.toDropId) {
+      this.getJqueryDom(this.toDropId).removeClass('overlap');
+    }
+    if (closestId) {
+      this.getJqueryDom(closestId).addClass('overlap');
+      this.toDropId = closestId;
+    } else {
+      this.toDropId = null;
     }
   }
+
+  releaseMovingCard = () => {
+    if (this.$movingCard) {
+      console.log('release');
+      this.canCardMouseDown = true;
+      this.$movingCard.removeClass('dropping');
+      this.$movingCard.removeClass('reversing');
+      this.$movingCard = null;
+    }
+  };
 
   onWindowMouseUp = () => {
     const $movingCard = this.$movingCard;
     if ($movingCard && this.canCardMove) {
       $movingCard.removeClass('grabbing');
-      $movingCard.addClass('dropping');
-      $movingCard.css({
-        top: this.movingCardOriTop,
-        left: this.movingCardOriLeft
-      });
       this.canCardMove = false;
-      setTimeout(() => {
-        this.canCardMouseDown = true;
-        $movingCard.removeClass('dropping');
-      }, 200);
 
-      this.$preOverlapDom.removeClass('overlap');
+      const toDropId = this.toDropId;
+      if (toDropId) {
+        $movingCard.addClass('dropping');
+        this.getJqueryDom(toDropId).removeClass('overlap');
+        const movingId = $movingCard.attr('id');
+        if (!movingId) {
+          throw new Error('Can not read movingCard Id');
+        }
+
+        const dropInfo = this.canDropIds[toDropId];
+        const grabInfo = this.canGrabIds['#' + movingId];
+
+        this.props.moveCard(
+          grabInfo.type,
+          grabInfo.index,
+          dropInfo.type,
+          dropInfo.index
+        );
+      } else {
+        $movingCard.addClass('reversing');
+        $movingCard.css({
+          top: this.movingCardOriTop,
+          left: this.movingCardOriLeft
+        });
+        setTimeout(this.releaseMovingCard, 100);
+      }
     }
   };
 
@@ -253,8 +321,10 @@ class CardArea extends PureComponent<CardAreaProps> {
   }
 
   componentDidUpdate() {
+    console.log('component did update');
     this.updateCardPos();
     this.computeCanGrabIds();
+    this.releaseMovingCard();
   }
 
   resizeContainer = () => {

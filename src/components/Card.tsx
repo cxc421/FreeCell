@@ -58,7 +58,7 @@ const Container = styled.div<ContainerProps>`
   height: ${cardHeight}px;
   border-radius: 5px;
   transform-origin: left top;
-  transition: top 200ms ease-in-out, left 200ms ease-in-out;
+  /* transition: top 100ms ease-in-out, left 100ms ease-in-out; */
   color: ${props =>
     props.suit === CardSuit.Heart || props.suit === CardSuit.Diamond
       ? '#F1697B'
