@@ -32,9 +32,14 @@ const Container = styled.div`
     transition: all 0ms ease-in-out !important;
     z-index: 10000 !important;
   }
+
   .dropping {
     cursor: grabbing !important;
     z-index: 10000 !important;
+  }
+
+  .overlap {
+    background: skyblue !important;
   }
 `;
 
@@ -52,6 +57,8 @@ class CardArea extends PureComponent<CardAreaProps> {
   scale = 1;
   canCardMouseDown = true;
   canCardMove = false;
+  canMovingCardDropIDs: string[] = [];
+  $preOverlapDom: JQuery<HTMLDivElement> = $('');
 
   getJqueryDom(id: string) {
     if (this.$cardMap[id]) return this.$cardMap[id];
@@ -86,6 +93,71 @@ class CardArea extends PureComponent<CardAreaProps> {
     this.canGrabIds = canGrabIds;
   }
 
+  computeCanDropDoms(suit: CardSuit, number: number) {
+    const { decks, cells, foundations } = this.props;
+    const result: string[] = [];
+
+    cells.forEach((cell, cellIndex) => {
+      if (cell.length === 0) {
+        const id = '#cell-' + cellIndex;
+        result.push(id);
+      }
+    });
+
+    const foundSuitList = [
+      CardSuit.Club,
+      CardSuit.Diamond,
+      CardSuit.Heart,
+      CardSuit.Spade
+    ];
+    for (let founIndex = foundations.length - 1; founIndex >= 0; founIndex--) {
+      const foundSuit = foundSuitList[founIndex];
+      if (foundSuit !== suit) {
+        continue;
+      }
+      const found = foundations[founIndex];
+      if (found.length === 0) {
+        if (number === 1) {
+          const id = '#found-' + founIndex;
+          result.push(id);
+        }
+        break;
+      }
+
+      const lastCard = found[found.length - 1];
+      if (lastCard.number === number - 1) {
+        const id = `#card-${lastCard.suit}-${lastCard.number}`;
+        result.push(id);
+        break;
+      }
+    }
+
+    let validSuit: { [key: string]: boolean } = {};
+    if (suit === CardSuit.Club || suit === CardSuit.Spade) {
+      validSuit[CardSuit.Diamond] = true;
+      validSuit[CardSuit.Heart] = true;
+    } else {
+      validSuit[CardSuit.Club] = true;
+      validSuit[CardSuit.Spade] = true;
+    }
+
+    decks.forEach((deck, deckIndex) => {
+      if (deck.length === 0) {
+        const id = `#deck-${deckIndex}`;
+        result.push(id);
+      } else {
+        const lastCard = deck[deck.length - 1];
+        if (lastCard.number === number + 1 && validSuit[lastCard.suit]) {
+          const id = `#card-${lastCard.suit}-${lastCard.number}`;
+          result.push(id);
+        }
+      }
+    });
+
+    this.canMovingCardDropIDs = result;
+    console.log(result);
+  }
+
   onCardMouseDown = (e: React.MouseEvent, suit: CardSuit, number: number) => {
     const id = `#card-${suit}-${number}`;
     if (this.canGrabIds.hasOwnProperty(id) && this.canCardMouseDown) {
@@ -97,31 +169,67 @@ class CardArea extends PureComponent<CardAreaProps> {
       this.mouseDownPageY = e.pageY;
       this.canCardMouseDown = false;
       this.canCardMove = true;
+      this.computeCanDropDoms(suit, number);
     }
   };
 
   onWindowMouseMove = (e: MouseEvent) => {
     if (!this.$movingCard || !this.canCardMove) return;
 
+    const newTop =
+      this.movingCardOriTop + (e.pageY - this.mouseDownPageY) / this.scale;
+    const newLeft =
+      this.movingCardOriLeft + (e.pageX - this.mouseDownPageX) / this.scale;
+
     this.$movingCard.css({
-      top: this.movingCardOriTop + (e.pageY - this.mouseDownPageY) / this.scale,
-      left:
-        this.movingCardOriLeft + (e.pageX - this.mouseDownPageX) / this.scale
+      top: newTop,
+      left: newLeft
     });
+
+    this.checkOverlap(newTop, newLeft);
   };
 
+  checkOverlap(top: number, left: number) {
+    let $closest: JQuery<HTMLDivElement> | null = null;
+    let minDis = Number.MAX_SAFE_INTEGER;
+
+    this.canMovingCardDropIDs.forEach(id => {
+      const $dom = this.getJqueryDom(id);
+      const yDiff = Math.abs(top - parseInt($dom.css('top')));
+      const xDiff = Math.abs(left - parseInt($dom.css('left')));
+      if (xDiff < 100 && yDiff < 140) {
+        const dis = Math.pow(xDiff, 2) + Math.pow(yDiff, 2);
+        if (dis < minDis) {
+          minDis = dis;
+          $closest = $dom;
+        }
+      }
+    });
+
+    this.$preOverlapDom.removeClass('overlap');
+    if ($closest) {
+      let $tmp = $closest as JQuery<HTMLDivElement>;
+      $tmp.addClass('overlap');
+      this.$preOverlapDom = $tmp;
+    }
+  }
+
   onWindowMouseUp = () => {
-    if (this.$movingCard && this.canCardMove) {
-      this.$movingCard.removeClass('grabbing');
-      this.$movingCard.addClass('dropping');
-      this.$movingCard.css({
+    const $movingCard = this.$movingCard;
+    if ($movingCard && this.canCardMove) {
+      $movingCard.removeClass('grabbing');
+      $movingCard.addClass('dropping');
+      $movingCard.css({
         top: this.movingCardOriTop,
         left: this.movingCardOriLeft
       });
       this.canCardMove = false;
       setTimeout(() => {
         this.canCardMouseDown = true;
+        $movingCard.removeClass('dropping');
       }, 200);
+
+      this.$preOverlapDom.removeClass('overlap');
     }
   };
 
