@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Background from './components/Background';
 import IntroBlock from './components/IntroBlock';
 import CtrlBtn from './components/CtrlBtn';
 import CardArea from './components/CardArea';
-import { CardType } from './components/Card';
 import { ReactComponent as Logo } from './assets/logo.svg';
 import { ReactComponent as PauseIcon } from './assets/icon-pause.svg';
 import { ReactComponent as ReplayIcon } from './assets/icon-replay.svg';
 import { ReactComponent as PrevStepIcon } from './assets/icon-prev-step.svg';
 import { ReactComponent as QuestionIcon } from './assets/icon-question.svg';
+import { secToTimeText, strPad2 } from './helper/time';
 import { useCardState } from './CardState';
 
 enum Page {
@@ -88,54 +88,56 @@ const Time = styled.div`
   font-weight: 300;
 `;
 
+enum GameStatus {
+  PLAY,
+  PAUSE,
+  WAIT
+}
+
+function useTime(gameStatus: GameStatus) {
+  const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    let key: undefined | number = undefined;
+    if (gameStatus === GameStatus.PLAY) {
+      key = setTimeout(() => {
+        setTime(time + 1);
+      }, 1000);
+    } else if (gameStatus === GameStatus.WAIT) {
+      setTime(0);
+    }
+    return () => {
+      clearTimeout(key);
+    };
+  }, [gameStatus, time]);
+
+  return time;
+}
+
 const App: React.FC = () => {
   const [page, setPage] = useState(Page.Intro);
+  const [gameStatus, setGameStatus] = useState(GameStatus.WAIT);
+  const time = useTime(gameStatus);
+  const { score = 0 } = useCardState();
+  // const allFoundationFill = !!!foundations.find(found => found.length !== 13);
+  // console.log(allFoundationFill);
+
   const introWrapperStyle: React.CSSProperties = {
-    // transition: 'opacity 300ms ease 0s, visibility 3000ms ease 0s',
     opacity: page === Page.Intro ? 1 : 0,
     visibility: page === Page.Intro ? 'visible' : 'hidden'
   };
   const gameWrapperStyle: React.CSSProperties = {
-    // transition: 'opacity 1s ease 300ms, visibility 1s ease 300ms',
     opacity: page === Page.Game ? 1 : 0,
     visibility: page === Page.Game ? 'visible' : 'hidden'
   };
 
-  const {
-    decks,
-    foundations,
-    cells,
-    moveCardFromDeckToCell,
-    moveCardFromCellToDeck,
-    moveCardFromCellToCell,
-    moveCardFromDeckToDeck,
-    moveCardFromCellToFound,
-    moveCardFromDeckToFound
-  } = useCardState();
+  function onClickStartBtn() {
+    setPage(Page.Game);
+    setGameStatus(GameStatus.PLAY);
+  }
 
-  function moveCard(
-    fromType: CardType,
-    fromIndex: number,
-    toType: CardType,
-    toIndex: number
-  ) {
-    if (fromType === CardType.Card) {
-      if (toType === CardType.OpenCell) {
-        moveCardFromDeckToCell(fromIndex, toIndex);
-      } else if (toType === CardType.Card) {
-        moveCardFromDeckToDeck(fromIndex, toIndex);
-      } else {
-        moveCardFromDeckToFound(fromIndex, toIndex);
-      }
-    } else {
-      if (toType === CardType.Card) {
-        moveCardFromCellToDeck(fromIndex, toIndex);
-      } else if (toType === CardType.OpenCell) {
-        moveCardFromCellToCell(fromIndex, toIndex);
-      } else {
-        moveCardFromCellToFound(fromIndex, toIndex);
-      }
-    }
+  function showNotCompleteMsg() {
+    alert('此功能未完成... _(:3 」∠ )_');
   }
 
   return (
@@ -143,15 +145,27 @@ const App: React.FC = () => {
       <Background highBg={page === Page.Game} />
       <Content>
         <div style={introWrapperStyle}>
-          <IntroBlock onClickStartBtn={() => setPage(Page.Game)} />
+          <IntroBlock onClickStartBtn={onClickStartBtn} />
         </div>
         <div style={gameWrapperStyle}>
           <TopRow>
             <StyledLogo />
             <BtnArea>
-              <CtrlBtn SvgIcon={ReplayIcon} text="重玩" />
-              <CtrlBtn SvgIcon={PrevStepIcon} text="上一步" />
-              <CtrlBtn SvgIcon={PauseIcon} text="暫停" />
+              <CtrlBtn
+                SvgIcon={ReplayIcon}
+                text="重玩"
+                onClick={showNotCompleteMsg}
+              />
+              <CtrlBtn
+                SvgIcon={PrevStepIcon}
+                text="上一步"
+                onClick={showNotCompleteMsg}
+              />
+              <CtrlBtn
+                SvgIcon={PauseIcon}
+                text="暫停"
+                onClick={showNotCompleteMsg}
+              />
             </BtnArea>
           </TopRow>
           <TimeScoreArea>
@@ -161,17 +175,13 @@ const App: React.FC = () => {
               textColor="white"
               iconColor="white"
               hoverStyle="color"
+              onClick={showNotCompleteMsg}
             />
-            <Time>Time: 0:00</Time>
-            <Score>Score: 00</Score>
+            <Time>Time: {secToTimeText(time)}</Time>
+            <Score>Score: {strPad2(score)}</Score>
           </TimeScoreArea>
           <CardAreaWrapper>
-            <CardArea
-              cells={cells}
-              decks={decks}
-              foundations={foundations}
-              moveCard={moveCard}
-            />
+            <CardArea />
           </CardAreaWrapper>
         </div>
       </Content>

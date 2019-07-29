@@ -26,16 +26,23 @@ export type CellsType = [Card[], Card[], Card[], Card[]];
 // ];
 export type FoundationsType = CellsType;
 
-export interface CardState {
+export interface PureCardState {
   cells: CellsType; // Need to check length 1
   foundations: FoundationsType; // Need to check order
   decks: DecksType;
 }
 
+export interface CardState extends PureCardState {
+  score: number;
+  prevScore: number;
+}
+
 export const defaultCardState: CardState = {
   cells: [[], [], [], []],
   foundations: [[], [], [], []],
-  decks: getRandomDecks() as DecksType
+  decks: getRandomDecks() as DecksType,
+  score: 0,
+  prevScore: 0
 };
 
 type ContextType = [CardState, React.Dispatch<Action>] | null;
@@ -145,19 +152,24 @@ function reducer(state: CardState, action: Action): CardState {
       return {
         ...state,
         decks: newDecks,
-        cells: newCells
+        cells: newCells,
+        score: state.score > 0 ? state.score - 1 : 0,
+        prevScore: state.score
       };
     }
     case ActionType.MoveCardFromCellToDeck: {
       const newDecks = Array.from(state.decks) as DecksType;
       const newCells = Array.from(state.cells) as CellsType;
+      console.log({ fromIndex: action.fromIndex });
       const movedCard = newCells[action.fromIndex].pop();
       if (!movedCard) return state;
       newDecks[action.toIndex].push(movedCard);
       return {
         ...state,
         decks: newDecks,
-        cells: newCells
+        cells: newCells,
+        score: state.score > 0 ? state.score - 1 : 0,
+        prevScore: state.score
       };
     }
     case ActionType.MoveCardFromCellToCell: {
@@ -167,7 +179,9 @@ function reducer(state: CardState, action: Action): CardState {
       newCells[action.toIndex].push(movedCard);
       return {
         ...state,
-        cells: newCells
+        cells: newCells,
+        score: state.score > 0 ? state.score - 1 : 0,
+        prevScore: state.score
       };
     }
     case ActionType.MoveCardFromDeckToDeck: {
@@ -177,7 +191,9 @@ function reducer(state: CardState, action: Action): CardState {
       newDeck[action.toIndex].push(movedCard);
       return {
         ...state,
-        decks: newDeck
+        decks: newDeck,
+        score: state.score > 0 ? state.score - 1 : 0,
+        prevScore: state.score
       };
     }
     case ActionType.MoveCardFromCellToFound: {
@@ -186,10 +202,16 @@ function reducer(state: CardState, action: Action): CardState {
       const movedCard = newCells[action.fromIndex].pop();
       if (!movedCard) return state;
       newFound[action.toIndex].push(movedCard);
+
+      const diff = state.score - state.prevScore;
+      const score = state.score + (diff > 0 ? diff * 2 : 10);
+
       return {
         ...state,
         cells: newCells,
-        foundations: newFound
+        foundations: newFound,
+        score,
+        prevScore: state.score
       };
     }
     case ActionType.MoveCardFromDeckToFound: {
@@ -198,10 +220,16 @@ function reducer(state: CardState, action: Action): CardState {
       const movedCard = newDecks[action.fromIndex].pop();
       if (!movedCard) return state;
       newFound[action.toIndex].push(movedCard);
+
+      const diff = state.score - state.prevScore;
+      const score = state.score + (diff > 0 ? diff * 2 : 10);
+
       return {
         ...state,
         decks: newDecks,
-        foundations: newFound
+        foundations: newFound,
+        score,
+        prevScore: state.score
       };
     }
     default:
@@ -217,11 +245,14 @@ export function useCardState() {
   const [state, dispatch] = context;
 
   function moveCardFromDeckToCell(fromIndex: number, toIndex: number) {
+    // console.log(fromIndex, toIndex);
+
     dispatch({
       type: ActionType.MoveCardFromDeckToCell,
       fromIndex,
       toIndex
     });
+    // decreaseScore();
   }
 
   function moveCardFromCellToDeck(fromIndex: number, toIndex: number) {

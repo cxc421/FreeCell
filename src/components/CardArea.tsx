@@ -1,10 +1,10 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useEffect } from 'react';
 import styled from 'styled-components';
 import $ from 'jquery';
 import Card, { CardType, CardSuit } from './Card';
-import { CardState } from '../CardState';
+import { PureCardState, useCardState } from '../CardState';
 
-interface CardAreaProps extends CardState {
+interface CardAreaProps extends PureCardState {
   moveCard: (
     fromType: CardType,
     fromIndex: number,
@@ -57,6 +57,7 @@ const Container = styled.div`
 
   .overlap {
     background: skyblue !important;
+    opacity: 1 !important;
   }
 `;
 
@@ -258,7 +259,7 @@ class CardArea extends PureComponent<CardAreaProps> {
 
   releaseMovingCard = () => {
     if (this.$movingCard) {
-      console.log('release');
+      // console.log('release');
       this.canCardMouseDown = true;
       this.$movingCard.removeClass('dropping');
       this.$movingCard.removeClass('reversing');
@@ -322,7 +323,7 @@ class CardArea extends PureComponent<CardAreaProps> {
   }
 
   componentDidUpdate() {
-    console.log('component did update');
+    // console.log('component did update');
     this.updateCardPos();
     this.computeCanGrabIds();
     this.releaseMovingCard();
@@ -473,14 +474,14 @@ class CardArea extends PureComponent<CardAreaProps> {
             id="found-3"
           />
           {/* deck  */}
-          <Card type={CardType.OpenCell} id="deck-0" />
-          <Card type={CardType.OpenCell} id="deck-1" />
-          <Card type={CardType.OpenCell} id="deck-2" />
-          <Card type={CardType.OpenCell} id="deck-3" />
-          <Card type={CardType.OpenCell} id="deck-4" />
-          <Card type={CardType.OpenCell} id="deck-5" />
-          <Card type={CardType.OpenCell} id="deck-6" />
-          <Card type={CardType.OpenCell} id="deck-7" />
+          <Card type={CardType.OpenCell} id="deck-0" style={{ opacity: 0 }} />
+          <Card type={CardType.OpenCell} id="deck-1" style={{ opacity: 0 }} />
+          <Card type={CardType.OpenCell} id="deck-2" style={{ opacity: 0 }} />
+          <Card type={CardType.OpenCell} id="deck-3" style={{ opacity: 0 }} />
+          <Card type={CardType.OpenCell} id="deck-4" style={{ opacity: 0 }} />
+          <Card type={CardType.OpenCell} id="deck-5" style={{ opacity: 0 }} />
+          <Card type={CardType.OpenCell} id="deck-6" style={{ opacity: 0 }} />
+          <Card type={CardType.OpenCell} id="deck-7" style={{ opacity: 0 }} />
           {/* card */}
           {cardList}
         </Container>
@@ -489,4 +490,60 @@ class CardArea extends PureComponent<CardAreaProps> {
   }
 }
 
-export default CardArea;
+const CardAreaWrapper: React.FC = () => {
+  const {
+    decks,
+    foundations,
+    cells,
+    moveCardFromDeckToCell,
+    moveCardFromCellToDeck,
+    moveCardFromCellToCell,
+    moveCardFromDeckToDeck,
+    moveCardFromCellToFound,
+    moveCardFromDeckToFound
+  } = useCardState();
+
+  const allFoundisFull = !!!foundations.find(found => found.length !== 13);
+
+  useEffect(() => {
+    if (allFoundisFull) {
+      alert('~~ (┘￣︶￣)┘ 恭喜  └(￣︶￣└) ~~');
+    }
+  }, [allFoundisFull]);
+
+  function moveCard(
+    fromType: CardType,
+    fromIndex: number,
+    toType: CardType,
+    toIndex: number
+  ) {
+    if (fromType === CardType.Card) {
+      if (toType === CardType.OpenCell) {
+        moveCardFromDeckToCell(fromIndex, toIndex);
+      } else if (toType === CardType.Card) {
+        moveCardFromDeckToDeck(fromIndex, toIndex);
+      } else {
+        moveCardFromDeckToFound(fromIndex, toIndex);
+      }
+    } else {
+      if (toType === CardType.Card) {
+        moveCardFromCellToDeck(fromIndex, toIndex);
+      } else if (toType === CardType.OpenCell) {
+        moveCardFromCellToCell(fromIndex, toIndex);
+      } else {
+        moveCardFromCellToFound(fromIndex, toIndex);
+      }
+    }
+  }
+
+  return (
+    <CardArea
+      decks={decks}
+      foundations={foundations}
+      cells={cells}
+      moveCard={moveCard}
+    />
+  );
+};
+
+export default React.memo(CardAreaWrapper);
