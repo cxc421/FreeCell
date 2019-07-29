@@ -1,19 +1,19 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "17be3ca42e3e0748caf5a1e50a4ff90e",
+    "revision": "dab77679f6f9a5e42dc9bc41eb7d4d49",
     "url": "/FreeCell/index.html"
   },
   {
-    "revision": "595818290a839e45a2e6",
+    "revision": "b837c191ac9337e3fbcf",
     "url": "/FreeCell/static/css/main.ffdd441f.chunk.css"
   },
   {
-    "revision": "2728fa00a295ec7c6bb7",
-    "url": "/FreeCell/static/js/2.5c4a30c5.chunk.js"
+    "revision": "9763da32f40e6254a74b",
+    "url": "/FreeCell/static/js/2.7ef54c93.chunk.js"
   },
   {
-    "revision": "595818290a839e45a2e6",
-    "url": "/FreeCell/static/js/main.9c51a139.chunk.js"
+    "revision": "b837c191ac9337e3fbcf",
+    "url": "/FreeCell/static/js/main.01a76ffa.chunk.js"
   },
   {
     "revision": "acbe79be84bdd005ae5b",
